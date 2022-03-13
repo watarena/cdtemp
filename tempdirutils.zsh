@@ -7,13 +7,8 @@ rmtemp() (
     rm -rf "$@"
 )
 
-_list_tempdirs() {
-    local dir files
-    for dir in "${TMPDIR%/}"/tmp.*/; do
-        files=$(echo "${dir}"*(N))
-        files="${files//${dir}/}"
-        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
-    done
+cptemp() {
+    cp -r "${TMPDIR%/}/$1/$2" "$3"
 }
 
 _cdtemp() {
@@ -41,6 +36,17 @@ _rmtemp() {
     _arguments "*:tempdirs:((${remain_tempdirs}))"
 }
 
+_cptemp() {
+    local dir files tempdirs
+    tempdirs=()
+    for dir in "${TMPDIR%/}"/tmp.*/; do
+        files=$(echo "${dir}"*(N))
+        files="${files//${dir}/}"
+        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
+    done
+    _arguments "1:tempdirs:((${tempdirs}))" "2:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'" '3:dst:_files'
+}
+
 compdef _cdtemp cdtemp
 compdef _rmtemp rmtemp
-
+compdef _cptemp cptemp
