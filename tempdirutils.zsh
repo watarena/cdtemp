@@ -11,33 +11,34 @@ _list_tempdirs() {
     local dir files
     for dir in "${TMPDIR%/}"/tmp.*/; do
         files=$(echo "${dir}"*(N))
-        tempdirs+=( "${dir##${TMPDIR%/}/}[${files//${dir}/}]" )
+        files="${files//${dir}/}"
+        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
     done
 }
 
 _cdtemp() {
-    local tempdirs
+    local dir files tempdirs
     tempdirs=()
-    _list_tempdirs
-    if [ ${#tempdirs} -gt 0 ]; then
-        _values 'tempdirs' "${tempdirs[@]}"
-    else
-        _values 'tempdirs' ''
-    fi
+    for dir in "${TMPDIR%/}"/tmp.*/; do
+        files=$(echo "${dir}"*(N))
+        files="${files//${dir}/}"
+        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
+    done
+    _arguments "1:tempdirs:((${tempdirs}))"
 }
 
 _rmtemp() {
-    local tempdirs
-    tempdirs=()
-    _list_tempdirs
-    for arg in ${words:1}; do
-      tempdirs=( ${tempdirs:#${arg}\[*]} )
+    local dir files tempdirs remain_tempdirs
+    tempdirs=( "${TMPDIR%/}"/tmp.*/ )
+    tempdirs=( ${tempdirs##${TMPDIR%/}/} )
+    tempdirs=( ${tempdirs:|words} )
+    remain_tempdirs=()
+    for dir in $tempdirs; do
+        files=$(echo "${TMPDIR%/}/${dir}"*(N))
+        files="${files//${dir}/}"
+        remain_tempdirs+=( "${dir}:\"${files//\"/\\\"}\"" )
     done
-    if [ ${#tempdirs} -gt 0 ]; then
-        _values 'tempdirs' "${tempdirs[@]}"
-    else
-        _values 'tempdirs' ''
-    fi
+    _arguments "*:tempdirs:((${remain_tempdirs}))"
 }
 
 compdef _cdtemp cdtemp
