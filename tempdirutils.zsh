@@ -29,8 +29,9 @@ _rmtemp() {
     tempdirs=( ${tempdirs:|words} )
     remain_tempdirs=()
     for dir in $tempdirs; do
-        files=$(echo "${TMPDIR%/}/${dir}"*(N))
-        files="${files//${dir}/}"
+        dir_path="${TMPDIR%/}/${dir}"
+        files=$(echo "${dir_path}"*(N))
+        files="${files//${dir_path}/}"
         remain_tempdirs+=( "${dir}:\"${files//\"/\\\"}\"" )
     done
     _arguments "*:tempdirs:((${remain_tempdirs}))"
