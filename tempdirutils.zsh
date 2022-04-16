@@ -11,6 +11,12 @@ cptemp() {
     cp -r "${TMPDIR%/}/$1/$2" "$3"
 }
 
+exectemp() (
+    cd "${TMPDIR%/}/$1" || return 1
+    shift
+    exec "$@"
+)
+
 _cdtemp() {
     local dir files tempdirs
     tempdirs=()
@@ -48,6 +54,18 @@ _cptemp() {
     _arguments "1:tempdirs:((${tempdirs}))" "2:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'" '3:dst:_files'
 }
 
+_exectemp() {
+    local dir files tempdirs
+    tempdirs=()
+    for dir in "${TMPDIR%/}"/tmp.*/; do
+        files=$(echo "${dir}"*(N))
+        files="${files//${dir}/}"
+        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
+    done
+    _arguments "1:tempdirs:((${tempdirs}))" '2:command:_command_names' "*:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'"
+}
+
 compdef _cdtemp cdtemp
 compdef _rmtemp rmtemp
 compdef _cptemp cptemp
+compdef _exectemp exectemp
