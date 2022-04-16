@@ -1,5 +1,13 @@
 cdtemp() {
-    [ $# -eq 0 ] && cd $(mktemp -d) || cd "${TMPDIR%/}/$1"
+    local tempdir
+    if [ $# -eq 0 ]; then
+        if tempdir=$(! mktemp -d); then
+            return 1
+        fi
+    else
+        tempdir="${TMPDIR%/}/$1"
+    fi
+    cd "${tempdir}"
 }
 
 rmtemp() (
