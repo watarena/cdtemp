@@ -25,52 +25,45 @@ exectemp() (
     exec "$@"
 )
 
-_cdtemp() {
-    local dir files tempdirs
-    tempdirs=()
-    for dir in "${TMPDIR%/}"/tmp.*/; do
-        files=$(echo "${dir}"*(N))
-        files="${files//${dir}/}"
-        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
+__list_tempdirs() {
+    local tempdirs tempdir_values
+    tempdirs=( "${TMPDIR%/}"/tmp.*/ )
+    tempdir_values=()
+    for dir in $tempdirs; do
+        dir="${dir%/}"
+        files=$(echo "${dir}/"*(N))
+        files="${files//${dir}\//}"
+        tempdir_values+=( "${dir##${TMPDIR%/}/}[${files//]/\\]}]" )
     done
-    _arguments "1:tempdirs:((${tempdirs}))"
+    _values 'tempdirs' $tempdir_values
+}
+
+_cdtemp() {
+    _arguments "1:tempdirs:__list_tempdirs"
 }
 
 _rmtemp() {
     local dir files tempdirs remain_tempdirs
     tempdirs=( "${TMPDIR%/}"/tmp.*/ )
     tempdirs=( ${tempdirs##${TMPDIR%/}/} )
+    tempdirs=( ${tempdirs%/} )
     tempdirs=( ${tempdirs:|words} )
     remain_tempdirs=()
     for dir in $tempdirs; do
-        dir_path="${TMPDIR%/}/${dir}"
+        dir_path="${TMPDIR%/}/${dir}/"
         files=$(echo "${dir_path}"*(N))
         files="${files//${dir_path}/}"
-        remain_tempdirs+=( "${dir}:\"${files//\"/\\\"}\"" )
+        remain_tempdirs+=( "${dir%/}\\:\"${files//\"/\\\"}\"" )
     done
     _arguments "*:tempdirs:((${remain_tempdirs}))"
 }
 
 _cptemp() {
-    local dir files tempdirs
-    tempdirs=()
-    for dir in "${TMPDIR%/}"/tmp.*/; do
-        files=$(echo "${dir}"*(N))
-        files="${files//${dir}/}"
-        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
-    done
-    _arguments "1:tempdirs:((${tempdirs}))" "2:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'" '3:dst:_files'
+    _arguments "1:tempdirs:__list_tempdirs" "2:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'" '3:dst:_files'
 }
 
 _exectemp() {
-    local dir files tempdirs
-    tempdirs=()
-    for dir in "${TMPDIR%/}"/tmp.*/; do
-        files=$(echo "${dir}"*(N))
-        files="${files//${dir}/}"
-        tempdirs+=( "${dir##${TMPDIR%/}/}:\"${files//\"/\\\"}\"" )
-    done
-    _arguments "1:tempdirs:((${tempdirs}))" '2:command:_command_names' "*:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'"
+    _arguments "1:tempdirs:__list_tempdirs" '2:command:_command_names' "*:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'"
 }
 
 compdef _cdtemp cdtemp
