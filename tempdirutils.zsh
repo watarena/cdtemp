@@ -26,16 +26,22 @@ exectemp() (
 )
 
 __list_tempdirs() {
-    local tempdirs tempdir_values
+    local tempdirs tempdir_values dir dirname
     tempdirs=( "${TMPDIR%/}"/tmp.*/ )
     tempdir_values=()
     for dir in $tempdirs; do
         dir="${dir%/}"
+        dirname="${dir##${TMPDIR%/}/}"
+        if [ "${words[(Ie)${dirname}]}" -ne 0 ]; then
+            continue
+        fi
         files=$(echo "${dir}/"*(N))
         files="${files//${dir}\//}"
-        tempdir_values+=( "${dir##${TMPDIR%/}/}[${files//]/\\]}]" )
+        tempdir_values+=( "${dirname}[${files//]/\\]}]" )
     done
-    _values 'tempdirs' $tempdir_values
+    if [ "${#tempdir_values}" -gt 0 ]; then
+        _values 'tempdirs' $tempdir_values
+    fi
 }
 
 _cdtemp() {
@@ -43,19 +49,7 @@ _cdtemp() {
 }
 
 _rmtemp() {
-    local dir files tempdirs remain_tempdirs
-    tempdirs=( "${TMPDIR%/}"/tmp.*/ )
-    tempdirs=( ${tempdirs##${TMPDIR%/}/} )
-    tempdirs=( ${tempdirs%/} )
-    tempdirs=( ${tempdirs:|words} )
-    remain_tempdirs=()
-    for dir in $tempdirs; do
-        dir_path="${TMPDIR%/}/${dir}/"
-        files=$(echo "${dir_path}"*(N))
-        files="${files//${dir_path}/}"
-        remain_tempdirs+=( "${dir%/}\\:\"${files//\"/\\\"}\"" )
-    done
-    _arguments "*:tempdirs:((${remain_tempdirs}))"
+    _arguments "*:tempdirs:__list_tempdirs"
 }
 
 _cptemp() {
