@@ -11,12 +11,12 @@ cdtemp() {
 }
 
 rmtemp() (
-    cd "${TMPDIR}"
-    rm -rf "$@"
+    cd "${TMPDIR}" || return 1
+    rm -rf -- "$@"
 )
 
 cptemp() {
-    cp -r "${TMPDIR%/}/$1/$2" "$3"
+    cp -r -- "${TMPDIR%/}/$1/$2" "$3"
 }
 
 exectemp() (
