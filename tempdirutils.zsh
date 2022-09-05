@@ -35,7 +35,7 @@ __list_tempdirs() {
         if [ "${words[(Ie)${dirname}]}" -ne 0 ]; then
             continue
         fi
-        files=$(echo "${dir}/"*(N))
+        files=( "${dir}/"*(N) )
         files="${files//${dir}\//}"
         tempdir_values+=( "${dirname}[${files//]/\\]}]" )
     done
