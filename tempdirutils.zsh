@@ -12,7 +12,23 @@ cdtemp() {
 
 rmtemp() (
     cd "${TMPDIR}" || return 1
-    rm -rf -- "$@"
+
+    local rmdirs=()
+    local is_empty_option_specified=false
+    while [ $# -ge 0 ]; do
+        case "$1" in
+        -e|--empty)
+            if [ "$is_empty_option_specified" = 'false' ]; then
+                rmdirs+=("${(@f)$(find . -maxdepth 1 -type d -name 'tmp.*' -empty)}")
+                is_empty_option_specified=true
+            fi
+            shift
+            ;;
+        *) break;;
+        esac
+    done
+    rmdirs+=( "$@" )
+    rm -rf -- "${rmdirs[@]}"
 )
 
 cptemp() {
@@ -49,7 +65,7 @@ _cdtemp() {
 }
 
 _rmtemp() {
-    _arguments "*:tempdirs:__list_tempdirs"
+    _arguments -A '-*' '(-e --empty)'{-e,--empty}'[remove all empty temp dirs]' "*:tempdirs:__list_tempdirs"
 }
 
 _cptemp() {
