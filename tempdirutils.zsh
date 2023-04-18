@@ -1,17 +1,20 @@
+TEMPDIRUTILS_BASEDIR="${TEMPDIRUTILS_BASEDIR:-$TMPDIR}"
+TEMPDIRUTILS_TEMPDIR_PREFIX="${TEMPDIRUTILS_TEMPDIR_PREFIX:-tmp.}"
+
 cdtemp() {
     local tempdir
     if [ $# -eq 0 ]; then
-        if tempdir=$(! mktemp -d); then
+        if tempdir=$(! mktemp -d "${TEMPDIRUTILS_BASEDIR%/}/${TEMPDIRUTILS_TEMPDIR_PREFIX}XXXXXXXXXX"); then
             return 1
         fi
     else
-        tempdir="${TMPDIR%/}/$1"
+        tempdir="${TEMPDIRUTILS_BASEDIR%/}/$1"
     fi
     cd "${tempdir}"
 }
 
 rmtemp() (
-    cd "${TMPDIR}" || return 1
+    cd "${TEMPDIRUTILS_BASEDIR}" || return 1
 
     local rmdirs=()
     local is_empty_option_specified=false
@@ -32,22 +35,22 @@ rmtemp() (
 )
 
 cptemp() {
-    cp -r -- "${TMPDIR%/}/$1/$2" "$3"
+    cp -r -- "${TEMPDIRUTILS_BASEDIR%/}/$1/$2" "$3"
 }
 
 exectemp() (
-    cd "${TMPDIR%/}/$1" || return 1
+    cd "${TEMPDIRUTILS_BASEDIR%/}/$1" || return 1
     shift
     exec "$@"
 )
 
 __list_tempdirs() {
     local tempdirs tempdir_values dir dirname
-    tempdirs=( "${TMPDIR%/}"/tmp.*/ )
+    tempdirs=( "${TEMPDIRUTILS_BASEDIR%/}/$TEMPDIRUTILS_TEMPDIR_PREFIX"*/ )
     tempdir_values=()
     for dir in $tempdirs; do
         dir="${dir%/}"
-        dirname="${dir##${TMPDIR%/}/}"
+        dirname="${dir##${TEMPDIRUTILS_BASEDIR%/}/}"
         if [ "${words[(Ie)${dirname}]}" -ne 0 ]; then
             continue
         fi
@@ -69,11 +72,11 @@ _rmtemp() {
 }
 
 _cptemp() {
-    _arguments "1:tempdirs:__list_tempdirs" "2:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'" '3:dst:_files'
+    _arguments "1:tempdirs:__list_tempdirs" "2:src_files:_path_files -W '${TEMPDIRUTILS_BASEDIR%/}/${words[2]}'" '3:dst:_files'
 }
 
 _exectemp() {
-    _arguments "1:tempdirs:__list_tempdirs" '2:command:_command_names' "*:src_files:_path_files -W '${TMPDIR%/}/${words[2]}'"
+    _arguments "1:tempdirs:__list_tempdirs" '2:command:_command_names' "*:src_files:_path_files -W '${TEMPDIRUTILS_BASEDIR%/}/${words[2]}'"
 }
 
 compdef _cdtemp cdtemp
