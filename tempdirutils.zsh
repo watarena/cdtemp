@@ -59,7 +59,7 @@ __list_tempdirs() {
         tempdir_values+=( "${dirname}[${files//]/\\]}]" )
     done
     if [ "${#tempdir_values}" -gt 0 ]; then
-        _values 'tempdirs' $tempdir_values
+        _values 'tempdirs' "${tempdir_values[@]}"
     fi
 }
 
